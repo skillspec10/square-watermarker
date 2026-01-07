@@ -1,6 +1,6 @@
 const urlParams = new URLSearchParams(window.location.search);
-const code = urlParams.get("code");
+const code = document.getElementById("oauthCode").value;
 if (code) {
-    document.getElementById("oauthCode").value = code;
-    document.getElementById("status").innerText = "OAuth code received!";
+    document.getElementById("status").innerText = "Signed in successfully!";
 }
+

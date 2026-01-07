@@ -1,8 +1,8 @@
 import os, io, json, tempfile, asyncio, requests
 from fastapi import FastAPI, UploadFile, Form, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 from google.oauth2.credentials import Credentials
@@ -13,14 +13,19 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.utils import ImageReader
 
+# -------------------------
+# ENV
+# -------------------------
 load_dotenv()
-
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
 GOOGLE_TOKEN_URI = "https://oauth2.googleapis.com/token"
 GOOGLE_SCOPES = ["https://www.googleapis.com/auth/drive"]
 
+# -------------------------
+# APP
+# -------------------------
 app = FastAPI()
 tasks = {}
 templates = Jinja2Templates(directory="templates")
@@ -128,15 +133,32 @@ async def process_task(task_id):
     task["status"] = "completed"
 
 # -------------------------
-# ROUTES
+# WEB UI ROUTE
 # -------------------------
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    oauth_url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={GOOGLE_CLIENT_ID}&redirect_uri={GOOGLE_REDIRECT_URI}&response_type=code&scope={' '.join(GOOGLE_SCOPES)}&access_type=offline&prompt=consent"
-    return templates.TemplateResponse("index.html", {"request": request, "oauth_url": oauth_url})
+async def index(request: Request, code: str = None):
+    oauth_url = (
+        f"https://accounts.google.com/o/oauth2/v2/auth"
+        f"?client_id={GOOGLE_CLIENT_ID}"
+        f"&redirect_uri={GOOGLE_REDIRECT_URI}"
+        f"&response_type=code"
+        f"&scope={' '.join(GOOGLE_SCOPES)}"
+        f"&access_type=offline&prompt=consent"
+    )
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request, "oauth_url": oauth_url, "oauth_code": code},
+    )
 
+# -------------------------
+# START WATERMARKING
+# -------------------------
 @app.post("/start")
-async def start(source_folder_id: str = Form(...), code: str = Form(...), logo: UploadFile = Form(...)):
+async def start(
+    source_folder_id: str = Form(...),
+    code: str = Form(...),
+    logo: UploadFile = Form(...),
+):
     creds = exchange_code_for_token(code)
     service = get_drive_service(creds)
     src_name = get_folder_name(service, source_folder_id)
@@ -159,6 +181,15 @@ async def start(source_folder_id: str = Form(...), code: str = Form(...), logo: 
     wm_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf").name
     create_watermark(logo_file.name, wm_pdf)
     task_id = str(len(tasks) + 1)
-    tasks[task_id] = {"service": service, "files": files, "folder_map": folder_map, "wm_pdf": wm_pdf, "progress": 0, "paused": False, "cancelled": False, "status": "running"}
+    tasks[task_id] = {
+        "service": service,
+        "files": files,
+        "folder_map": folder_map,
+        "wm_pdf": wm_pdf,
+        "progress": 0,
+        "paused": False,
+        "cancelled": False,
+        "status": "running",
+    }
     asyncio.create_task(process_task(task_id))
     return {"task_id": task_id}

@@ -8,12 +8,12 @@
 <body>
   <h1>Drive PDF Watermarker</h1>
   <a href="{{ oauth_url }}">Sign in with Google</a><br><br>
-  <form id="watermarkForm" method="post" enctype="multipart/form-data" action="/start">
-    <input type="hidden" name="code" id="oauthCode">
-    <input type="text" name="source_folder_id" placeholder="Google Drive Folder ID" required><br><br>
-    <input type="file" name="logo" accept="image/*" required><br><br>
-    <button type="submit">Start Watermarking</button>
-  </form>
+    <form id="watermarkForm" method="post" enctype="multipart/form-data" action="/start">
+        <input type="hidden" name="code" id="oauthCode" value="{{ oauth_code }}">
+        <input type="text" name="source_folder_id" placeholder="Google Drive Folder ID" required><br><br>
+        <input type="file" name="logo" accept="image/*" required><br><br>
+        <button type="submit">Start Watermarking</button>
+    </form>
   <div id="status"></div>
   <script src="/static/app.js"></script>
 </body>
