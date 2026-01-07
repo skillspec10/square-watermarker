@@ -1,12 +1,12 @@
 fastapi
 uvicorn
+jinja2
+python-multipart
+PyPDF2
+reportlab
 google-api-python-client
 google-auth
 google-auth-oauthlib
 google-auth-httplib2
-PyPDF2
-reportlab
-python-multipart
+requests
 python-dotenv
-
-
