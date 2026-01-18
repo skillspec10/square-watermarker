@@ -34,7 +34,7 @@ def create_watermark(logo, out):
     scale = 0.7
     nw, nh = iw * scale, ih * scale
 
-    c.setFillAlpha(0.3)
+    c.setFillAlpha(0.4)
     c.drawImage(
         img,
         (w - nw) / 2,
